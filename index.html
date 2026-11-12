@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelOfficial.com - Global Pixel Market & Reels</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; image-rendering: pixelated; }
+        body { background-color: #121212; color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Yuqori navigatsiya */
+        header { width: 100%; max-width: 480px; background: #fffbeb; color: #111; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #111; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 16px; font-weight: bold; color: #b91c1c; text-shadow: 2px 2px 0px #fde047; }
+        
+        /* Asosiy qism */
+        main { width: 100%; max-width: 480px; flex: 1; display: flex; flex-direction: column; padding-bottom: 70px; position: relative; }
+        
+        /* Reels qismi */
+        #reels-container { width: 100%; height: calc(100vh - 130px); overflow-y: scroll; scroll-snap-type: y mandatory; background: #1a1a1a; }
+        .reel-item { width: 100%; height: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; border-bottom: 2px solid #333; }
+        .reel-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; cursor: pointer; }
+        .reel-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 25px 20px; background: linear-gradient(transparent, rgba(0,0,0,0.92)); z-index: 2; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Foydalanuvchi ma'lumotlari */
+        .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; width: fit-content; }
+        .user-avatar { width: 42px; height: 42px; border: 2px solid #fde047; border-radius: 50%; object-fit: cover; background: #333; }
+        .user-details h3 { font-size: 14px; color: #fff; text-shadow: 1px 1px #000; }
+        .user-details p { font-size: 11px; color: #cbd5e1; }
+        
+        .artwork-title { font-size: 16px; font-weight: bold; color: #fde047; text-shadow: 1px 1px #000; }
+        .reel-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .price-tag { font-size: 13px; background: #1e1e1e; border: 2px solid #fde047; color: #fde047; padding: 6px 10px; font-weight: bold; }
+        .buy-btn { width: auto; padding: 8px 16px; background: #16a34a; color: #fff; border: 2px solid #fff; font-weight: bold; font-size: 13px; cursor: pointer; box-shadow: 2px 2px 0px #000; }
+        .buy-btn:disabled { background: #555; color: #aaa; border-color: #777; cursor: not-allowed; }
+
+        /* Sahifalar */
+        .page-section { padding: 20px; display: none; flex-direction: column; gap: 15px; width: 100%; }
+        .page-section.active { display: flex; }
+        
+        input { width: 100%; padding: 12px; background: #222; border: 2px solid #444; color: #fff; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #fde047; color: #111; font-weight: bold; border: 2px solid #111; cursor: pointer; text-transform: uppercase; box-shadow: 2px 2px 0px #000; }
+        button:active { transform: scale(0.98); box-shadow: none; }
+
+        /* Modal / To'liq ekran rasm */
+        #fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1000; display: none; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
+        #fullscreen-modal img { max-width: 100%; max-height: 70vh; object-fit: contain; border: 4px solid #fde047; }
+        .modal-top-bar { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { width: auto; background: #b91c1c; color: #fff; border: 2px solid #fff; padding: 8px 14px; font-weight: bold; cursor: pointer; font-size: 15px; }
+        .modal-action-box { margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 350px; }
+
+        /* Auth ekran */
+        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .auth-box { width: 100%; max-width: 400px; background: #1e1e1e; border: 4px solid #fde047; padding: 25px; display: flex; flex-direction: column; gap: 15px; box-shadow: 6px 6px 0px #b91c1c; }
+
+        /* Profil paneli */
+        .profile-header { display: flex; justify-content: space-between; align-items: center; background: #1e1e1e; padding: 15px; border: 2px solid #444; }
+        .coin-badge { background: #b91c1c; color: #fde047; padding: 6px 10px; font-weight: bold; font-size: 13px; border: 2px solid #fde047; }
+        
+        .grid-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .grid-item { position: relative; aspect-ratio: 1/1; cursor: pointer; }
+        .grid-item img { width: 100%; height: 100%; object-fit: cover; border: 2px solid #444; }
+        .grid-item.purchased img { border: 4px solid #fde047; box-shadow: 0 0 8px rgba(253, 224, 71, 0.5); }
+        .status-dot { position: absolute; top: 4px; right: 4px; font-size: 9px; padding: 2px 4px; font-weight: bold; background: #000; border: 1px solid #fff; }
+        .status-on { color: #4ade80; }
+        .status-off { color: #f87171; }
+
+        /* Pastki menyu */
+        nav.bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #fffbeb; border-top: 4px solid #111; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+        .nav-btn { background: none; border: none; font-size: 11px; font-weight: bold; color: #333; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: none; }
+        .nav-btn.active { color: #b91c1c; }
+
+        /* Yuklanish indikatori */
+        #loader { position: fixed; top: 55px; right: 15px; background: #fde047; color: #000; padding: 4px 8px; font-size: 10px; font-weight: bold; z-index: 500; display: none; border: 2px solid #000; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">⏳ Sinxronlanmoqda...</div>
+
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen">
+        <div class="auth-box">
+            <h2 id="auth-title" style="color: #fde047; text-align: center; text-shadow: 2px 2px #000;">🎮 PIXELOFFICIAL.COM</h2>
+            <p id="auth-desc" style="font-size: 12px; color: #aaa; text-align: center;">Global akkaunt yaratish</p>
+            
+            <input type="text" id="auth-username" placeholder="Username (login)...">
+            <input type="password" id="auth-password" placeholder="Parol...">
+            
+            <button id="auth-submit-btn" onclick="handleAuth()">YARATISH</button>
+            <button style="background: #333; color: #fff; border-color: #555;" onclick="toggleAuthMode()" id="auth-switch-btn">Kirishga o'tish</button>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN IMAGE MODAL -->
+    <div id="fullscreen-modal">
+        <div class="modal-top-bar">
+            <button class="back-btn" onclick="closeFullscreen()">&lt; ORQAGA</button>
+            <div id="modal-price-badge" class="price-tag"></div>
+        </div>
+        <img id="modal-img-elem" src="" alt="Zoomed Art">
+        <div class="modal-action-box">
+            <div id="modal-caption" style="color: #fde047; font-size: 16px; font-weight: bold; text-align: center;"></div>
+            <div id="modal-owner-text" style="color: #aaa; font-size: 12px;"></div>
+            <div id="modal-dynamic-controls" style="width: 100%; display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo">PixelOfficial.com</div>
+        <div id="header-coins" style="font-size: 12px; font-weight: bold; color: #b91c1c;">🪙 0</div>
+    </header>
+
+    <main>
+        <!-- 1. REELS BO'LIMI -->
+        <div id="section-reels" class="page-section active" style="padding:0; height: calc(100vh - 130px);">
+            <div id="reels-container"></div>
+        </div>
+
+        <!-- 2. SOTISH BO'LIMI -->
+        <div id="section-add" class="page-section">
+            <h2 style="color: #fde047; font-size: 16px;">🎨 Yangi rasm yaratish va sotish</h2>
+            <p style="font-size: 12px; color: #aaa;">Limit: 1 dona (Faqat bir kishi sotib ola oladi)</p>
+            
+            <input type="file" id="art-file-input" accept="image/*" onchange="previewArtFile(event)">
+            <input type="text" id="art-img-url" placeholder="Yoki rasm havolasi (HTTP/HTTPS)...">
+            <input type="text" id="art-title" placeholder="Rasm nomi...">
+            <input type="number" id="art-price" placeholder="Narxi (faqat raqam, masalan: 50)...">
+            <button onclick="addNewArt()">Sotuvga chiqarish</button>
+        </div>
+
+        <!-- 3. PROFIL BO'LIMI -->
+        <div id="section-profile" class="page-section">
+            <div class="profile-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <img id="my-profile-avatar" class="user-avatar" style="width: 50px; height: 50px;" src="" alt="Avatar">
+                    <div>
+                        <h3 id="my-profile-displayname" style="color: #fde047; font-size: 15px;"></h3>
+                        <p id="my-profile-country" style="font-size: 11px; color: #aaa;"></p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="coin-badge" id="my-profile-coins">🪙 0</div>
+                    <button style="width: auto; padding: 8px 10px; background: #333; color: #fde047; border-color: #fde047;" onclick="openEditProfile()" title="Tahrirlash">✏️</button>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                <p style="font-size: 11px; color: #aaa;">🟨 Sariq ramka = Sotib olingan</p>
+                <button style="width: auto; padding: 5px 10px; background: #b91c1c; color: #fff; font-size: 11px;" onclick="logout()">Chiqish</button>
+            </div>
+            
+            <div class="grid-gallery" id="my-artworks-grid"></div>
+        </div>
+
+        <!-- 4. BOSHQALAR PROFILI -->
+        <div id="section-user-profile" class="page-section">
+            <button style="width: auto; padding: 6px 12px; background: #333; color: #fff; font-size: 12px;" onclick="switchTab('reels', document.querySelectorAll('.nav-btn')[0])">&lt; Reelsga qaytish</button>
+            <div class="profile-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <img id="up-profile-avatar" class="user-avatar" style="width: 50px; height: 50px;" src="" alt="Avatar">
+                    <div>
+                        <h3 id="up-profile-displayname" style="color: #fde047; font-size: 15px;"></h3>
+                        <p id="up-profile-country" style="font-size: 11px; color: #aaa;"></p>
+                    </div>
+                </div>
+                <div class="coin-badge" id="up-profile-coins">🪙 0</div>
+            </div>
+            <h4 style="font-size: 13px; color: #fff;">Ijodkorning rasmlari (Sotib olish uchun bosing):</h4>
+            <div class="grid-gallery" id="up-artworks-grid"></div>
+        </div>
+
+        <!-- 5. EDIT PROFIL -->
+        <div id="section-edit-profile" class="page-section">
+            <h2 style="color: #fde047; font-size: 16px;">✏️ Profilni tahrirlash</h2>
+            
+            <label style="font-size: 11px; color: #aaa;">Profil rasmi (Galereyadan):</label>
+            <input type="file" id="edit-avatar-file" accept="image/*" onchange="previewEditAvatar(event)">
+            <input type="text" id="edit-avatar-url" placeholder="Yoki avatar URL...">
+
+            <label style="font-size: 11px; color: #aaa;">Username (Unikal login):</label>
+            <input type="text" id="edit-username" placeholder="Username...">
+
+            <label style="font-size: 11px; color: #aaa;">Display Name (Reels ostida ko'rinadi):</label>
+            <input type="text" id="edit-displayname" placeholder="Display name...">
+
+            <label style="font-size: 11px; color: #aaa;">Davlatingiz:</label>
+            <input type="text" id="edit-country" placeholder="Masalan: Uzbekistan 🇺🇿...">
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveProfileChanges()">SAQLASH</button>
+                <button style="background: #333; color: #fff;" onclick="switchTab('profile', document.querySelectorAll('.nav-btn')[2])">Bekor qilish</button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('reels', this)">🎬 Reels</button>
+        <button class="nav-btn" onclick="switchTab('add', this)">➕ Sotish</button>
+        <button class="nav-btn" onclick="switchTab('profile', this)">👤 Profil</button>
+    </nav>
+
+    <script>
+        // SIZNING SHAXSIY GLOBAL FIREBASE BAZANGIZ
+        const FIREBASE_DB_URL = "https://veb-brauser-default-rtdb.firebaseio.com";
+
+        let users = {};
+        let arts = [];
+        let currentUsername = localStorage.getItem('pixel_session_user') || null;
+        let isLoginMode = false;
+        let tempBase64Art = "";
+        let tempBase64Avatar = "";
+
+        function showLoader(show) {
+            document.getElementById('loader').style.display = show ? 'block' : 'none';
+        }
+
+        // Global bazadan ma'lumotlarni yuklash
+        async function syncFromCloud() {
+            showLoader(true);
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/pixel_data.json`);
+                const data = await res.json();
+                if (data) {
+                    users = data.users || {};
+                    arts = data.arts ? Object.values(data.arts) : [];
+                    arts.sort((a, b) => b.createdAt - a.createdAt);
+                } else {
+                    users = {
+                        "alex_pixel": { username: "alex_pixel", password: "123", displayName: "Alex Pixel", country: "USA 🇺🇸", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100", coins: 500 }
+                    };
+                    arts = [
+                        {
+                            id: "art_101",
+                            title: "Cyber Sunset #1",
+                            price: 50,
+                            url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500",
+                            ownerUsername: "alex_pixel",
+                            onSale: true,
+                            isPurchased: false,
+                            createdAt: Date.now()
+                        }
+                    ];
+                    await saveToCloud();
+                }
+            } catch (err) {
+                console.error("Cloud xatosi:", err);
+            }
+            showLoader(false);
+        }
+
+        // Global bazaga saqlash
+        async function saveToCloud() {
+            showLoader(true);
+            try {
+                const artsObj = {};
+                arts.forEach(a => artsObj[a.id] = a);
+                await fetch(`${FIREBASE_DB_URL}/pixel_data.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ users: users, arts: artsObj })
+                });
+            } catch (err) {
+                alert("Internet bilan aloqa yo'q yoki Firebase ruxsati yopiq!");
+            }
+            showLoader(false);
+        }
+
+        function getCurrentUser() {
+            return currentUsername ? users[currentUsername] : null;
+        }
+
+        function updateHeaderCoins() {
+            const u = getCurrentUser();
+            document.getElementById('header-coins').innerText = u ? `🪙 ${u.coins}` : '🪙 0';
+        }
+
+        // --- AUTH TIZIMI ---
+        async function initApp() {
+            await syncFromCloud();
+            if (!currentUsername || !users[currentUsername]) {
+                document.getElementById('auth-screen').style.display = 'flex';
+            } else {
+                document.getElementById('auth-screen').style.display = 'none';
+                updateHeaderCoins();
+                renderReels();
+            }
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "🔑 KIRISH" : "🎮 PIXELOFFICIAL.COM";
+            document.getElementById('auth-desc').innerText = isLoginMode ? "Global akkauntingizga kiring" : "Yangi global akkaunt yaratish";
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "KIRISH" : "YARATISH";
+            document.getElementById('auth-switch-btn').innerText = isLoginMode ? "Ro'yxatdan o'tishga o'tish" : "Kirishga o'tish";
+        }
+
+        async function handleAuth() {
+            const uInput = document.getElementById('auth-username').value.trim().toLowerCase();
+            const pInput = document.getElementById('auth-password').value.trim();
+
+            if (!uInput || !pInput) {
+                alert("Username va parolni kiriting!");
+                return;
+            }
+
+            await syncFromCloud();
+
+            if (!isLoginMode) {
+                if (users[uInput]) {
+                    alert("Bu usernamedan allaqachon foydalanilmoqda!");
+                    return;
+                }
+                users[uInput] = {
+                    username: uInput,
+                    password: pInput,
+                    displayName: uInput,
+                    country: "Uzbekistan 🇺🇿",
+                    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100",
+                    coins: 300
+                };
+                currentUsername = uInput;
+                localStorage.setItem('pixel_session_user', currentUsername);
+                await saveToCloud();
+                alert("Akkaunt yaratildi! Sizga 300 Coin bonus berildi.");
+                document.getElementById('auth-screen').style.display = 'none';
+                updateHeaderCoins();
+                renderReels();
+            } else {
+                const user = users[uInput];
+                if (!user) {
+                    alert("Bu username mavjud emas!");
+                    return;
+                }
+                if (user.password !== pInput) {
+                    alert("Parol noto'g'ri!");
+                    return;
+                }
+                currentUsername = uInput;
+                localStorage.setItem('pixel_session_user', currentUsername);
+                document.getElementById('auth-screen').style.display = 'none';
+                updateHeaderCoins();
+                renderReels();
+            }
+        }
+
+        function logout() {
+            currentUsername = null;
+            localStorage.removeItem('pixel_session_user');
+            document.getElementById('auth-screen').style.display = 'flex';
+        }
+
+        // --- TABLAR ---
+        async function switchTab(tabId, btn) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (tabId === 'reels') {
+                await syncFromCloud();
+               renderReels();
+            }
+            if (tabId === 'profile') {
+                await syncFromCloud();
+                loadProfileUI();
+            }
+            updateHeaderCoins();
+        }
+
+        // --- REELS ---
+        function renderReels() {
+            const container = document.getElementById('reels-container');
+            container.innerHTML = '';
+
+            const saleArts = arts.filter(a => a.onSale === true);
+
+            if (saleArts.length === 0) {
+                container.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#aaa; text-align:center; padding:20px;">Hozircha sotuvda rasmlar yo'q.<br>"Sotish" bo'limidan rasm qo'shing!</div>`;
+                return;
+            }
+
+            saleArts.forEach(art => {
+                const owner = users[art.ownerUsername] || { displayName: art.ownerUsername, country: "Global", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" };
+                const isMyOwn = (art.ownerUsername === currentUsername);
+
+                const div = document.createElement('div');
+                div.className = 'reel-item';
+                div.innerHTML = `
+                    <img class="reel-img" src="${art.url}" alt="Art" onclick="openFullscreen('${art.id}')">
+                    <div class="reel-overlay">
+                        <div class="user-info" onclick="viewUserProfile('${owner.username}')">
+                            <img class="user-avatar" src="${owner.avatar}" alt="Avatar">
+                            <div class="user-details">
+                                <h3>${owner.displayName}</h3>
+                                <p>${owner.country}</p>
+                            </div>
+                        </div>
+                        <div class="artwork-title">${art.title}</div>
+                        <div class="reel-actions">
+                            <div class="price-tag">🪙 ${art.price} Coin</div>
+                            ${isMyOwn 
+                                ? `<button class="buy-btn" disabled>SIZNING RASMINGIZ</button>` 
+                                : `<button class="buy-btn" onclick="buyArtwork('${art.id}')">SOTIB OLISH</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- SOTIB OLISH ---
+        async function buyArtwork(artId) {
+            await syncFromCloud();
+            const art = arts.find(a => a.id === artId);
+            const buyer = getCurrentUser();
+
+            if (!art || !art.onSale) {
+                alert("Kechirasiz, bu rasm allaqachon sotib olingan yoki sotuvdan olingan!");
+                renderReels();
+                closeFullscreen();
+                return;
+            }
+
+            if (art.ownerUsername === buyer.username) {
+                alert("O'zingizning rasmingizni sotib ola olmaysiz!");
+                return;
+            }
+
+            const price = Number(art.price);
+            if (buyer.coins < price) {
+                alert(`Mablag' yetarli emas! Sizda ${buyer.coins} Coin bor, rasm narxi ${price} Coin.`);
+                return;
+            }
+
+            if (!confirm(`"${art.title}" rasmini ${price} Coin evaziga sotib olasizmi?`)) return;
+
+            buyer.coins -= price;
+            if (users[art.ownerUsername]) {
+                users[art.ownerUsername].coins += price;
+            }
+
+            art.ownerUsername = buyer.username;
+            art.onSale = false;
+            art.isPurchased = true;
+
+            await saveToCloud();
+            updateHeaderCoins();
+            closeFullscreen();
+            alert("Tabriklaymiz! Rasm sotib olindi va sizning profilingizga sariq ramka bilan qo'shildi.");
+            switchTab('profile', document.querySelectorAll('.nav-btn')[2]);
+        }
+
+        // --- YANGI RASM QO'SHISH ---
+        function previewArtFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tempBase64Art = e.target.result;
+                    document.getElementById('art-img-url').value = "[Galereyadan tanlandi]";
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function addNewArt() {
+            const urlInput = document.getElementById('art-img-url').value.trim();
+            const title = document.getElementById('art-title').value.trim();
+            const price = Number(document.getElementById('art-price').value.trim());
+
+            const finalUrl = tempBase64Art || (urlInput !== "[Galereyadan tanlandi]" ? urlInput : "");
+
+            if (!finalUrl || !title || !price || price <= 0) {
+                alert("Iltimos, rasm, nom va to'g'ri narx kiriting!");
+                return;
+            }
+
+            await syncFromCloud();
+
+            arts.unshift({
+                id: "art_" + Date.now(),
+                title: title,
+                price: price,
+                url: finalUrl,
+                ownerUsername: currentUsername,
+                onSale: true,
+                isPurchased: false,
+                createdAt: Date.now()
+            });
+
+            tempBase64Art = "";
+            document.getElementById('art-file-input').value = "";
+            document.getElementById('art-img-url').value = "";
+            document.getElementById('art-title').value = "";
+            document.getElementById('art-price').value = "";
+
+            await saveToCloud();
+            alert("Rasm global sotuvga chiqarildi!");
+            switchTab('reels', document.querySelectorAll('.nav-btn')[0]);
+        }
+
+        // --- PROFIL UI ---
+        function loadProfileUI() {
+            const u = getCurrentUser();
+            if (!u) return;
+
+            document.getElementById('my-profile-avatar').src = u.avatar;
+            document.getElementById('my-profile-displayname').innerText = u.displayName;
+            document.getElementById('my-profile-country').innerText = u.country;
+            document.getElementById('my-profile-coins').innerText = `🪙 ${u.coins}`;
+
+            const grid = document.getElementById('my-artworks-grid');
+            grid.innerHTML = '';
+            const myArts = arts.filter(a => a.ownerUsername === u.username);
+
+            if (myArts.length === 0) {
+                grid.innerHTML = `<p style="font-size:12px; color:#aaa; grid-column: span 3; text-align:center; padding:20px;">Sizda hali rasmlar yo'q</p>`;
+                return;
+            }
+
+            myArts.forEach(art => {
+                const div = document.createElement('div');
+                div.className = 'grid-item' + (art.isPurchased ? ' purchased' : '');
+                div.onclick = () => openFullscreen(art.id);
+                div.innerHTML = `
+                    <img src="${art.url}" alt="Art">
+                    <span class="status-dot ${art.onSale ? 'status-on' : 'status-off'}">
+                        ${art.onSale ? 'ON SALE' : 'OFF'}
+                    </span>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        // --- FULLSCREEN MODAL ---
+        function openFullscreen(artId) {
+            const art = arts.find(a => a.id === artId);
+            if (!art) return;
+
+            const owner = users[art.ownerUsername] || { displayName: art.ownerUsername };
+            const isMyOwn = (art.ownerUsername === currentUsername);
+
+            document.getElementById('modal-img-elem').src = art.url;
+            document.getElementById('modal-caption').innerText = art.title;
+            document.getElementById('modal-owner-text').innerText = `Egasi: ${owner.displayName}`;
+            document.getElementById('modal-price-badge').innerText = art.onSale ? `🪙 ${art.price} Coin` : `OFF SALE`;
+
+            const controls = document.getElementById('modal-dynamic-controls');
+            controls.innerHTML = '';
+
+            if (isMyOwn) {
+                const toggleBtn = document.createElement('button');
+                if (art.onSale) {
+                    toggleBtn.style.background = "#b91c1c";
+                    toggleBtn.style.color = "#fff";
+                    toggleBtn.innerText = "OFF SALE QILISH (Sotuvdan olish)";
+                    toggleBtn.onclick = () => toggleArtSaleStatus(art.id, false);
+                } else {
+                    toggleBtn.style.background = "#16a34a";
+                    toggleBtn.style.color = "#fff";
+                    toggleBtn.innerText = "ON SALE QILISH (Sotuvga qo'yish)";
+                    toggleBtn.onclick = () => toggleArtSaleStatus(art.id, true);
+                }
+                controls.appendChild(toggleBtn);
+            } else {
+                if (art.onSale) {
+                    const buyBtn = document.createElement('button');
+                    buyBtn.style.background = "#16a34a";
+                    buyBtn.style.color = "#fff";
+                    buyBtn.innerText = `SOTIB OLISH (🪙 ${art.price} Coin)`;
+                    buyBtn.onclick = () => buyArtwork(art.id);
+                    controls.appendChild(buyBtn);
+                } else {
+                    controls.innerHTML = `<div style="text-align:center; color:#f87171; font-weight:bold; padding:8px; border:1px solid #f87171;">BU RASM SOTUVDA EMAS (OFF SALE)</div>`;
+                }
+            }
+
+            document.getElementById('fullscreen-modal').style.display = 'flex';
+        }
+
+        async function toggleArtSaleStatus(artId, newStatus) {
+            await syncFromCloud();
+            const art = arts.find(a => a.id === artId);
+            if (!art) return;
+
+            if (newStatus === true) {
+                const newPrice = prompt("Sotuv narxini kiriting (Coin):", art.price);
+                if (!newPrice || isNaN(newPrice) || Number(newPrice) <= 0) return;
+                art.price = Number(newPrice);
+            }
+
+            art.onSale = newStatus;
+            await saveToCloud();
+            openFullscreen(artId);
+            loadProfileUI();
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreen-modal').style.display = 'none';
+        }
+
+        // --- BOSHQALAR PROFILI ---
+        async function viewUserProfile(username) {
+            await syncFromCloud();
+            const targetUser = users[username];
+            if (!targetUser) return;
+
+            document.getElementById('up-profile-avatar').src = targetUser.avatar;
+            document.getElementById('up-profile-displayname').innerText = targetUser.displayName;
+            document.getElementById('up-profile-country').innerText = targetUser.country;
+            document.getElementById('up-profile-coins').innerText = `🪙 ${targetUser.coins}`;
+
+            const grid = document.getElementById('up-artworks-grid');
+            grid.innerHTML = '';
+            const userArts = arts.filter(a => a.ownerUsername === username);
+
+            if (userArts.length === 0) {
+                grid.innerHTML = `<p style="font-size:12px; color:#aaa; grid-column: span 3; text-align:center; padding:20px;">Rasmlar yo'q</p>`;
+            } else {
+                userArts.forEach(art => {
+                    const div = document.createElement('div');
+                    div.className = 'grid-item' + (art.isPurchased ? ' purchased' : '');
+                    div.onclick = () => openFullscreen(art.id);
+                    div.innerHTML = `
+                        <img src="${art.url}" alt="Art">
+                        <span class="status-dot ${art.onSale ? 'status-on' : 'status-off'}">
+                            ${art.onSale ? 'ON SALE' : 'OFF'}
+                        </span>
+                    `;
+                    grid.appendChild(div);
+                });
+            }
+
+            switchTab('user-profile', null);
+        }
+
+        // --- EDIT PROFIL ---
+        function openEditProfile() {
+            const u = getCurrentUser();
+            document.getElementById('edit-username').value = u.username;
+            document.getElementById('edit-displayname').value = u.displayName;
+            document.getElementById('edit-country').value = u.country;
+            document.getElementById('edit-avatar-url').value = u.avatar;
+            tempBase64Avatar = "";
+            document.getElementById('edit-avatar-file').value = "";
+            
+            switchTab('edit-profile', null);
+        }
+
+        function previewEditAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tempBase64Avatar = e.target.result;
+                    document.getElementById('edit-avatar-url').value = "[Galereyadan tanlandi]";
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function saveProfileChanges() {
+            await syncFromCloud();
+            const u = getCurrentUser();
+            const newUsername = document.getElementById('edit-username').value.trim().toLowerCase();
+            const newDisplayName = document.getElementById('edit-displayname').value.trim();
+            const newCountry = document.getElementById('edit-country').value.trim();
+            const urlAvatar = document.getElementById('edit-avatar-url').value.trim();
+
+            if (!newUsername || !newDisplayName) {
+                alert("Username va Display name bo'sh bo'lishi mumkin emas!");
+                return;
+            }
+
+            if (newUsername !== u.username && users[newUsername]) {
+                alert("Bu username allaqachon band qilingan!");
+                return;
+            }
+
+            const finalAvatar = tempBase64Avatar || (urlAvatar !== "[Galereyadan tanlandi]" && urlAvatar ? urlAvatar : u.avatar);
+
+            if (newUsername !== u.username) {
+                arts.forEach(art => {
+                    if (art.ownerUsername === u.username) {
+                        art.ownerUsername = newUsername;
+                    }
+                });
+                delete users[u.username];
+                u.username = newUsername;
+                users[newUsername] = u;
+                currentUsername = newUsername;
+                localStorage.setItem('pixel_session_user', currentUsername);
+            }
+
+            u.displayName = newDisplayName;
+            u.country = newCountry || u.country;
+            u.avatar = finalAvatar;
+
+            await saveToCloud();
+            alert("Profil saqlandi!");
+            switchTab('profile', document.querySelectorAll('.nav-btn')[2]);
+        }
+
+        // Ilovani ishga tushirish
+        initApp();
+    </script>
+</body>
+</html>
